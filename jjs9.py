@@ -51,8 +51,8 @@ class Js9(object):
         self.created = False
         self.wid = uuid.uuid4().hex
         self.url = None
-        self.wcs_world2pix = None
-        self.wcs_pix2world = None
+        self.wcs = None
+        self.header = None
 
     def DelDiv(self):
         """
@@ -90,17 +90,23 @@ class Js9(object):
         get_ipython().run_cell_magic('javascript', '', "JS9.AddDivs('{}JS9');".format(self.wid))
         self.created = True
 
-    def Load(self, url, **kwargs):
+    def Load(self, url, close=True, **kwargs):
         """
         Loads a FITS file into the display created.
 
         Parameters:
         -----------
         url : Path to file (can be locally)
+        close: Close previous image (default : yes), to prevent this, set close=False
 
         Extra arguments in form of a dictionary used by the JS9 javascript object JS9.Load()
         """
         opts = ''
+        if close:
+            try:
+                self.CloseImage()
+            except:
+                pass
         self.url = url
         if not 'wcsunits' in kwargs:
             kwargs['wcsunits'] = 'degrees'
@@ -110,14 +116,18 @@ class Js9(object):
             opts = json.dumps(kwargs)+','
         fmt = dict(url=self.url, kw=opts, wid=self.wid)
         command = "JS9.Load('{url}',{kw}{{display:'{wid}JS9'}});".format(**fmt)
-        try:
-            hdulist = fits.open(url)
-            temp_wcs = wcs.WCS(hdulist[0].header)
-            self.wcs_world2pix = temp_wcs.wcs_world2pix
-            self.wcs_pix2world = temp_wcs.wcs_pix2world
-            hdulist.close()
-        except:
-            pass
+        
+        hdulist = fits.open(url)
+        hdu_idx = 0
+        for i,hdu in enumerate(hdulist):
+            if hdu.name.upper() == 'SCI':
+                hdu_idx = i
+        self.header = hdulist[hdu_idx].header
+        self.wcs = wcs.WCS(self.header)
+        self.xsize = self.header['NAXIS1']
+        self.ysize = self.header['NAXIS2']
+        hdulist.close()
+        
         get_ipython().run_cell_magic('javascript', '', command)
 
     def CloseImage(self):
