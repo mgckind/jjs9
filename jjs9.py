@@ -9,6 +9,7 @@ import uuid
 import json
 from astropy import wcs
 from astropy.io import fits
+import pyjs9
 
 init_js9 = False
 
@@ -43,9 +44,9 @@ def libinit(root='http://localhost:8888/files/'):
     get_ipython().run_cell_magic('html', '', css)
     get_ipython().run_cell_magic('javascript', '', init)
 
-class Js9(object):
+class Js9Local(object):
     """Jupyter Notebbok wrapper around JS9 class object"""
-    def __init__(self):
+    def __init__(self, root='http://localhost:8888/files/'):
         """
         Initiate the class with an unique id unless is manually parsed
 
@@ -55,7 +56,7 @@ class Js9(object):
         """
         global init_js9
         if not init_js9:
-             libinit()
+             libinit(root=root)
              init_js9 = True
 
         self.created = False
@@ -195,3 +196,60 @@ class Js9(object):
         get_ipython().run_cell_magic('javascript', '', command)
 
 
+
+
+class Js9Server(pyjs9.JS9):
+    
+    def __init__(self, root=None, port_html=8000, port_io=8001):
+        self.created = False
+        self.wid = uuid.uuid4().hex
+        self.wcs = None
+        self.header = None
+        self.root = root
+        self.port_html = str(port_html)
+        self.port_io = str(port_io)
+        super(Js9Server, self).__init__(host=self.root+':'+self.port_io,id=self.wid+'JS9')
+
+    def DelDiv(self):
+        """
+        Delete current div for this class
+        """
+        if self.created:
+            #self.CloseImage()
+            command = """$('#{}').remove();""".format(self.wid)
+            get_ipython().run_cell_magic('javascript', '', command)
+            self.created = False
+            self.wid = uuid.uuid4().hex
+    
+    def NewDiv(self, width='80%', height='512px'):
+        """
+        Creates a new div to be added to the notebook cell
+
+        Parameters:
+        -----------
+
+        width :  width of the displayed window in css style (string). Default is 
+                 80% of the screen
+        height : height of the displayed window in css style (string). Default is 
+                 512px of the screen
+        
+        """
+        if self.created:
+            self.DelDiv()
+        print('Display id = {}JS9'.format(self.wid))
+        fmt = dict(url=self.root, port0=self.port_html, wid=self.wid, width=width, height=height)
+        html_command = """
+        <div id='{wid}'>
+        <iframe src='{url}:{port0}/new/{wid}' width='{width}' height='{height}'>
+        </iframe>        
+        </div>
+        """.format(**fmt)
+        #js_command = "element.append({});".format(command)
+        get_ipython().run_cell_magic('html', '', html_command)
+        self.created = True
+
+
+
+
+
+    
