@@ -10,7 +10,9 @@ import json
 from astropy import wcs
 from astropy.io import fits
 
-def libinit(root=None):
+init_js9 = False
+
+def libinit(root='http://localhost:8888/files/'):
     """
     Initialization function needed to load javascript libraries and css styles into the notebook.
 
@@ -18,6 +20,9 @@ def libinit(root=None):
     -----------
     root : root url where main path for the notebook is running
     """
+    global init_js9
+    init_js9 = True
+    print('...')
     #root = 'http://localhost:8888/files/'
     req = """
     require.config({
@@ -48,6 +53,11 @@ class Js9(object):
         -----------
         wid : Id to be use for the JS9 display. Default a unique id is created
         """
+        global init_js9
+        if not init_js9:
+             libinit()
+             init_js9 = True
+
         self.created = False
         self.wid = uuid.uuid4().hex
         self.url = None
