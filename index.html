@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" >
+  <link type="image/x-icon" rel="shortcut icon" href="./favicon.ico">
+  <link type="text/css" rel="stylesheet" href="/static/js9support.css">
+  <link type="text/css" rel="stylesheet" href="/static/js9.css">
+  <script type="text/javascript" src="/static/js9support.min.js"></script>
+  <script type="text/javascript" src="/static/js9.min.js"></script>
+  <script type="text/javascript" src="/static/js9plugins.js"></script>
+  <style type="text/css">body {margin: 0px;}</style>
+  <script type='text/javascript'>
+function randomString(length) {
+    var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+
+    if (! length) {
+        length = Math.floor(Math.random() * chars.length);
+    }
+
+    var str = '';
+    for (var i = 0; i < length; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return str;
+}
+</script>
+
+  <title>JS9</title>
+</head>
+<body onload="JS9.Preload('https://dl.dropboxusercontent.com/u/52976557/test.fits');">
+  <div class="JS9Menubar" data-width='512px' data-height='54px' id="JS9Menubar"></div>
+  <div class="JS9" data-width='80%' data-height='512px' id="JS9"></div>
+  <div class="JS9Colorbar" id="JS9Colorbar"></div>
+<!--<button onclick="set_value()">Set Value</button>-->
+<script type="text/javascript">
+{% if jid %}
+var uniqueJS9 = "{{jid}}"+"JS9"
+{% else %}
+var uniqueJS9 = randomString(8)+"JS9"
+{% end %}
+var uniqueJS9Menubar = uniqueJS9 + "Menubar"
+var uniqueJS9Colorbar = uniqueJS9 + "Colorbar"
+document.getElementById('JS9').setAttribute("id",uniqueJS9);
+document.getElementById('JS9Menubar').setAttribute("id",uniqueJS9Menubar);
+document.getElementById('JS9Colorbar').setAttribute("id",uniqueJS9Colorbar);
+console.log(document.getElementsByClassName('JS9')[0].id)
+</script>
+
+</body>
+</html>
