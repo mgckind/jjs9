@@ -219,7 +219,6 @@ class Js9Server(pyjs9.JS9):
             command = """$('#{}').remove();""".format(self.wid)
             get_ipython().run_cell_magic('javascript', '', command)
             self.created = False
-            self.wid = uuid.uuid4().hex
     
     def NewDiv(self, width='80%', height='512px'):
         """
@@ -240,7 +239,7 @@ class Js9Server(pyjs9.JS9):
         fmt = dict(url=self.root, port0=self.port_html, wid=self.wid, width=width, height=height)
         html_command = """
         <div id='{wid}'>
-        <iframe src='{url}:{port0}/new/{wid}' width='{width}' height='{height}'>
+        <iframe src='{url}:{port0}/{wid}' width='{width}' height='{height}'>
         </iframe>        
         </div>
         """.format(**fmt)
