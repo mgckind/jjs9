@@ -256,7 +256,7 @@ class Js9Server(pyjs9.JS9):
         self.root = root
         self.port_html = port_html
         self.port_io = port_io
-	    super(Js9Server, self).__init__(host=root+':'+str(port_io),id=wid+'JS9')
+	super(Js9Server, self).__init__(host=root+':'+str(port_io),id=wid+'JS9')
 
     def LoadFITS(self, name=None):
         """
