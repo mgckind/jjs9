@@ -195,7 +195,7 @@ class Js9Local(object):
                         temp[k] = 'circle'
             objs.append(temp)
         all_objs = json.dumps(objs)
-        command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.id)
+        command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
 
 
@@ -207,8 +207,14 @@ default_height= 600
 
 def NewDiv(width=default_width, height=default_height):
     """
-    Add new div element of JS9 into Jupyter notebook. The name 'NewDiv' is temporary. 
-
+    Creates a new div to be added to the notebook cell
+    The name 'NewDiv' is temporary. 
+    
+    Parameters:
+    -----------
+    width :  width of the displayed window in css style (string). Default is 970.
+    height : height of the displayed window in css style (string). Default is 600.
+    -----------
     examples:
     >>> import jjs9
     >>> jjs9.NewDiv()    
@@ -229,7 +235,7 @@ class Js9Server(pyjs9.JS9):
     """
     Connect to server that runs js9Helper.js for server-side analysis
 
-    example:
+    Example:
     >>> J = jjs9.Js9Server()
     >>> J.LoadFITS('filename.fits')
 
@@ -255,10 +261,10 @@ class Js9Server(pyjs9.JS9):
     def LoadFITS(self, name=None):
         """
         Load('filename') from pyjs9 opens files on the JS9 website server.
-	    LoadFITS('filename.fits') opens fits files local to the user's running jupyter notebook.
-	    LoadFITS and SetFITS use a similar algorithm.
-	    """
-	    F=fits.open(name)
+	LoadFITS('filename.fits') opens fits files local to the user's running jupyter notebook.
+	LoadFITS and SetFITS use a similar algorithm.
+	"""
+	F=fits.open(name)
         # in-memory string	
         memstr=BytesIO()
         # write fits to memory string
