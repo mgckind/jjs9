@@ -10,6 +10,9 @@ import json
 from astropy import wcs
 from astropy.io import fits
 import pyjs9
+from six import BytesIO
+import base64
+from socketIO_client import SocketIO
 
 init_js9 = False
 
@@ -192,63 +195,83 @@ class Js9Local(object):
                         temp[k] = 'circle'
             objs.append(temp)
         all_objs = json.dumps(objs)
-        command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.wid)
+        command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.id)
         get_ipython().run_cell_magic('javascript', '', command)
 
 
+default_root = 'http://141.142.236.170'
+default_port_html = 8000
+default_port_io = 8001
+default_width = 970
+default_height= 600
+
+def NewDiv(width=default_width, height=default_height):
+    """
+    Add new div element of JS9 into Jupyter notebook. The name 'NewDiv' is temporary. 
+
+    examples:
+    >>> import jjs9
+    >>> jjs9.NewDiv()    
+    """
+
+    global wid
+    wid = uuid.uuid4().hex
+    print('Display id = {}JS9'.format(wid))
+    fmt = dict(url=default_root, port0=default_port_html, wid=wid, width=width, height=height)
+    html_command = """
+    <iframe src='{url}:{port0}/{wid}' width='{width}' height='{height}'>
+    </iframe>
+    """.format(**fmt)
+    get_ipython().run_cell_magic('html', '', html_command)
 
 
 class Js9Server(pyjs9.JS9):
+    """
+    Connect to server that runs js9Helper.js for server-side analysis
+
+    example:
+    >>> J = jjs9.Js9Server()
+    >>> J.LoadFITS('filename.fits')
+
+    Note that the name assignment J = jjs9.Js9Server() will only give the name to the latest NewDiv,
+    so it's recommended to give a name of a NewDiv immediately after calling NewDiv().
+
+    All pyjs9 functionality are available. https://github.com/ericmandel/pyjs9
+
+    Examples:
+    >>> J.LoadProxy('http://hea-www.cfa.harvard.edu/~eric/coma.fits', {'scale':'linear', 'colormap':'sls'})
+    >>> J.SetColormap('red')
+
+    """
     
-    def __init__(self, root=None, port_html=8000, port_io=8001):
-        self.created = False
-        self.wid = uuid.uuid4().hex
+    def __init__(self, root=default_root, port_html=default_port_html, port_io=default_port_io):
         self.wcs = None
         self.header = None
         self.root = root
-        self.port_html = str(port_html)
-        self.port_io = str(port_io)
-        super(Js9Server, self).__init__(host=self.root+':'+self.port_io,id=self.wid+'JS9')
+        self.port_html = port_html
+        self.port_io = port_io
+	    super(Js9Server, self).__init__(host=root+':'+str(port_io),id=wid+'JS9')
 
-    def DelDiv(self):
+    def LoadFITS(self, name=None):
         """
-        Delete current div for this class
-        """
-        if self.created:
-            #self.CloseImage()
-            command = """$('#{}').remove();""".format(self.wid)
-            get_ipython().run_cell_magic('javascript', '', command)
-            self.created = False
-    
-    def NewDiv(self, width='80%', height='512px'):
-        """
-        Creates a new div to be added to the notebook cell
-
-        Parameters:
-        -----------
-
-        width :  width of the displayed window in css style (string). Default is 
-                 80% of the screen
-        height : height of the displayed window in css style (string). Default is 
-                 512px of the screen
+        Load('filename') from pyjs9 opens files on the JS9 website server.
+	    LoadFITS('filename.fits') opens fits files local to the user's running jupyter notebook.
+	    LoadFITS and SetFITS use a similar algorithm.
+	    """
+	    F=fits.open(name)
+        # in-memory string	
+        memstr=BytesIO()
+        # write fits to memory string
+        F.writeto(memstr)
+        # get memory string as an encoded string
+        encstr = base64.b64encode(memstr.getvalue())
+        # set up JS9 options
+        opts = {}
+        if name:
+            opts['filename'] = name
+        # send encoded file to JS9 for display
+        got = self.Load(encstr, opts)
+        # finished with memory string
+        memstr.close()
+        return got
         
-        """
-        if self.created:
-            self.DelDiv()
-        print('Display id = {}JS9'.format(self.wid))
-        fmt = dict(url=self.root, port0=self.port_html, wid=self.wid, width=width, height=height)
-        html_command = """
-        <div id='{wid}'>
-        <iframe src='{url}:{port0}/{wid}' width='{width}' height='{height}'>
-        </iframe>        
-        </div>
-        """.format(**fmt)
-        #js_command = "element.append({});".format(command)
-        get_ipython().run_cell_magic('html', '', html_command)
-        self.created = True
-
-
-
-
-
-    
