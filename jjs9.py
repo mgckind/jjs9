@@ -178,6 +178,7 @@ class Js9Local(object):
         Add Regions to JS9 display using same syntax as JS9.AddRegions.
         This uses astropy.wcs to do the coordinates transformations
         """
+        # Addregions use pixel coordinates. listRegions and SaveRegions use RA and Dec.
         n_objs = 0
         objs = []
         # default shape is circle
@@ -198,6 +199,27 @@ class Js9Local(object):
         command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
 
+    def RegionList(self):
+        """
+        Name the JS9 GetShapes object string as RegionList.
+        RegionList can be called in python after running Js9Local.RegionList().
+        """
+        command = """
+        IPython.notebook.kernel.execute("RegionList=" + JSON.stringify(JS9.GetShapes("regions", {{display: '{wid}JS9'}})));
+        """.format(wid=self.wid)
+        get_ipython().run_cell_magic('javascript', '', command)
+
+    def SaveRegions(self, fname="js9.reg"):
+        """
+        Under development:
+        Currently only the default filename js9.reg is allowed. 
+        The necessary header "# Region file format: JS9 version 1.0 ICRS" is not yet included.
+        Each region also needs to start from a new line, but IPython.notebook.kernel.execute has a problem with newlines.
+        For loop must be in one line for IPython.notebook.kernel.execute.
+        """
+        self.fname = fname
+        command = """IPython.notebook.kernel.execute('file = open("js9.reg", "w"); [file.write(x["wcsstr"]) for x in '+ JSON.stringify(JS9.GetShapes("regions", {{display: '{wid}JS9'}})) +']; file.close()');""".format(wid=self.wid)
+        get_ipython().run_cell_magic('javascript', '', command)
 
 default_root = 'http://141.142.236.170'
 default_port_html = 8000
@@ -234,6 +256,8 @@ def NewDiv(width=default_width, height=default_height):
 class Js9Server(pyjs9.JS9):
     """
     Connect to server that runs js9Helper.js for server-side analysis
+    Js9Server is best for Jupyter notebook running on a local computer. 
+    Analyses are done by communicating with the JS9 back-end server using socket.io.
 
     Example:
     >>> J = jjs9.Js9Server()
