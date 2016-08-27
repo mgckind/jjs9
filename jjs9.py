@@ -82,7 +82,7 @@ class Js9Local(object):
             self.wid = uuid.uuid4().hex
 
 
-    def NewDiv(self, width='80%', height='512px'):
+    def NewDiv(self, width='100%', height='512px'):
         """
         Creates a new div to be added to the notebook cell
 
@@ -99,30 +99,22 @@ class Js9Local(object):
             self.DelDiv()
         print('Display id = {}JS9'.format(self.wid))
         command = """
-        "<div id='{0}' ><div class='JS9Menubar' data-width='512px' data-height='54px' id='{0}JS9Menubar'></div><div class='JS9' data-width='{1}' data-height='{2}' id='{0}JS9'></div></div>"
+        "<div id='{0}' ><div class='JS9Menubar' id='{0}JS9Menubar'></div><div class='JS9' id='{0}JS9'></div></div>"
         """.format(self.wid, width, height)
         js_command = "element.append({});".format(command)
         get_ipython().run_cell_magic('javascript', '', js_command)
         get_ipython().run_cell_magic('javascript', '', "JS9.AddDivs('{}JS9');".format(self.wid))
         self.created = True
 
-    def Load(self, url, close=True, **kwargs):
+    def Load(self, url, **kwargs):
         """
         Loads a FITS file into the display created.
-
         Parameters:
         -----------
         url : Path to file (can be locally)
-        close: Close previous image (default : yes), to prevent this, set close=False
-
         Extra arguments in form of a dictionary used by the JS9 javascript object JS9.Load()
         """
         opts = ''
-        if close:
-            try:
-                self.CloseImage()
-            except:
-                pass
         self.url = url
         if not 'wcsunits' in kwargs:
             kwargs['wcsunits'] = 'degrees'
@@ -132,18 +124,14 @@ class Js9Local(object):
             opts = json.dumps(kwargs)+','
         fmt = dict(url=self.url, kw=opts, wid=self.wid)
         command = "JS9.Load('{url}',{kw}{{display:'{wid}JS9'}});".format(**fmt)
-        
-        hdulist = fits.open(url)
-        hdu_idx = 0
-        for i,hdu in enumerate(hdulist):
-            if hdu.name.upper() == 'SCI':
-                hdu_idx = i
-        self.header = hdulist[hdu_idx].header
-        self.wcs = wcs.WCS(self.header)
-        self.xsize = self.header['NAXIS1']
-        self.ysize = self.header['NAXIS2']
-        hdulist.close()
-        
+        try:
+            hdulist = fits.open(url)
+            temp_wcs = wcs.WCS(hdulist[0].header)
+            self.wcs_world2pix = temp_wcs.wcs_world2pix
+            self.wcs_pix2world = temp_wcs.wcs_pix2world
+            hdulist.close()
+        except:
+            pass
         get_ipython().run_cell_magic('javascript', '', command)
 
     def CloseImage(self):
@@ -172,7 +160,7 @@ class Js9Local(object):
         fmt = dict(wid=self.wid,cmap=colormap, extra=extra)
         command = "JS9.SetColormap('{cmap}', {extra} {{display:'{wid}JS9'}});".format(**fmt)
         get_ipython().run_cell_magic('javascript', '', command)
-        
+       
     def AddRegions(self, **kwargs):
         """
         Add Regions to JS9 display using same syntax as JS9.AddRegions.
@@ -195,8 +183,8 @@ class Js9Local(object):
                     if k == 'shape':
                         temp[k] = 'circle'
             objs.append(temp)
-        all_objs = json.dumps(objs)
-        command = "JS9.AddRegions({objs}, {{display:'{id}JS9'}})".format(objs=all_objs, id=self.wid)
+        self.all_objs = json.dumps(objs)
+        command = "JS9.AddRegions({objs}, {{display:'{wid}JS9'}})".format(objs=self.all_objs, wid=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
 
     def RegionList(self):
@@ -243,7 +231,7 @@ class Js9Local(object):
         command = "JS9.LoadRegions('{fname}', {{display:'{wid}JS9'}})".format(fname=fname, wid=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
         
-        
+
 default_root = 'http://141.142.236.170'
 default_port_html = 8000
 default_port_io = 8001
@@ -303,15 +291,15 @@ class Js9Server(pyjs9.JS9):
         self.root = root
         self.port_html = port_html
         self.port_io = port_io
-	super(Js9Server, self).__init__(host=root+':'+str(port_io),id=wid+'JS9')
+        super(Js9Server, self).__init__(host=root+':'+str(port_io),id=wid+'JS9')
 
     def LoadFITS(self, name=None):
         """
         Load('filename') from pyjs9 opens files on the JS9 website server.
-	LoadFITS('filename.fits') opens fits files local to the user's running jupyter notebook.
-	LoadFITS and SetFITS use a similar algorithm.
-	"""
-	F=fits.open(name)
+        LoadFITS('filename.fits') opens fits files local to the user's running jupyter notebook.
+        LoadFITS and SetFITS use a similar algorithm.
+        """
+        F=fits.open(name)
         # in-memory string	
         memstr=BytesIO()
         # write fits to memory string
