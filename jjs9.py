@@ -13,6 +13,8 @@ import pyjs9
 from six import BytesIO
 import base64
 from socketIO_client import SocketIO
+import re
+import os
 
 init_js9 = False
 
@@ -170,9 +172,7 @@ class Js9Local(object):
         fmt = dict(wid=self.wid,cmap=colormap, extra=extra)
         command = "JS9.SetColormap('{cmap}', {extra} {{display:'{wid}JS9'}});".format(**fmt)
         get_ipython().run_cell_magic('javascript', '', command)
-
         
-
     def AddRegions(self, **kwargs):
         """
         Add Regions to JS9 display using same syntax as JS9.AddRegions.
@@ -209,18 +209,41 @@ class Js9Local(object):
         """.format(wid=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
 
-    def SaveRegions(self, fname="js9.reg"):
+    def ReadRegions(self, fname="temp"):
         """
-        Under development:
-        Currently only the default filename js9.reg is allowed. 
-        The necessary header "# Region file format: JS9 version 1.0 ICRS" is not yet included.
-        Each region also needs to start from a new line, but IPython.notebook.kernel.execute has a problem with newlines.
+        ReadRegions() must be be run before SaveRegions() to save regions.
+        Create a default temp file with regions written in one line, which is deleted after SaveRegions().
+        IPython.notebook.kernel.execute has a problem with new lines.
         For loop must be in one line for IPython.notebook.kernel.execute.
         """
         self.fname = fname
-        command = """IPython.notebook.kernel.execute('file = open("js9.reg", "w"); [file.write(x["wcsstr"]) for x in '+ JSON.stringify(JS9.GetShapes("regions", {{display: '{wid}JS9'}})) +']; file.close()');""".format(wid=self.wid)
+        command = """IPython.notebook.kernel.execute('file = open("temp", "w"); [file.write(x["wcsstr"]) for x in '+ JSON.stringify(JS9.GetShapes("regions", {{display: '{wid}JS9'}})) +']; file.close()');""".format(wid=self.wid)
         get_ipython().run_cell_magic('javascript', '', command)
 
+    def SaveRegions(self, fname="js9.reg"):
+        """
+        Save regions to a text file in the directory of the running Jupyter notebook
+        following JS9 SaveRegions format with header and each region starts with a new line.
+        Default file name is js9.reg. Users can specifiy their own file name.
+        """
+        self.fname = fname
+        temp = open('temp','r').read()
+        regions = re.sub(r'(circle)', r'\n\1', temp)
+        regions = "# Region file format: JS9 version 1.0\nICRS"+regions
+        file = open(fname, "w")
+        file.write(regions)
+        file.close()
+        os.remove("temp")
+
+    def LoadRegions(self, fname='js9.reg'):
+        """
+        LoadRegions() loads saved regions from a user-specified file in the current Jupyter notebook's directory
+        """
+        self.fname=fname
+        command = "JS9.LoadRegions('{fname}', {{display:'{wid}JS9'}})".format(fname=fname, wid=self.wid)
+        get_ipython().run_cell_magic('javascript', '', command)
+        
+        
 default_root = 'http://141.142.236.170'
 default_port_html = 8000
 default_port_io = 8001
