@@ -1,5 +1,9 @@
 ## Demo notebook
 
-Since the notebook is using Javascript in the front-end to display the images, I've saved a png copy of the working notebook and it won't rendered completely.
+Since the notebook is using Javascript in the front-end to display the images, it doesn't render well. I've posted few pictures below for comepleteness.
 
-![Demo](Demo.png)
+![See Demo](http://matias-ck.com/talks/Argonne_Chicagoland_2016/images/demo.mp4)
+
+![fig1](fig1.png)
+
+![fig2](fig2.png)
