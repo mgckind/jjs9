@@ -28,7 +28,6 @@ def libinit(root='http://localhost:8888/files/'):
     """
     global init_js9
     init_js9 = True
-    print('...')
     #root = 'http://localhost:8888/files/'
     req = """
     require.config({
@@ -51,7 +50,7 @@ def libinit(root='http://localhost:8888/files/'):
 
 class Js9Local(object):
     """Jupyter Notebbok wrapper around JS9 class object"""
-    def __init__(self, root='http://localhost:8888/files/'):
+    def __init__(self, root='http://localhost:8888/files/',do_init=False):
         """
         Initiate the class with an unique id unless is manually parsed
 
@@ -61,7 +60,7 @@ class Js9Local(object):
         """
         global init_js9
         if not init_js9:
-             libinit(root=root)
+             if do_init:libinit(root=root)
              init_js9 = True
 
         self.created = False
@@ -127,6 +126,7 @@ class Js9Local(object):
         try:
             hdulist = fits.open(url)
             temp_wcs = wcs.WCS(hdulist[0].header)
+            self.header = hdulist[0].header
             self.wcs_world2pix = temp_wcs.wcs_world2pix
             self.wcs_pix2world = temp_wcs.wcs_pix2world
             hdulist.close()
