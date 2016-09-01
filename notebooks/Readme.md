@@ -2,7 +2,7 @@
 
 Since the notebook is using Javascript in the front-end to display the images, it doesn't render well. I've posted few pictures below for comepleteness.
 
-![See Demo](http://matias-ck.com/talks/Argonne_Chicagoland_2016/images/demo.mp4)
+To see a demo video click [Here](http://matias-ck.com/talks/Argonne_Chicagoland_2016/images/demo.mp4)
 
 ![fig1](fig1.png)
 
