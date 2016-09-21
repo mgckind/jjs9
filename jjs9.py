@@ -171,7 +171,7 @@ class Js9Local(object):
         objs = []
         # default shape is circle
         if not 'shape' in kwargs:
-            kwargs['shape'] = ['circle']
+            kwargs['shape'] = 'circle'
         for k in kwargs.keys():
             n_objs = max(n_objs, len(kwargs[k]))
         for j in range(n_objs):
@@ -180,8 +180,8 @@ class Js9Local(object):
                 try:
                     temp[k] = kwargs[k][j]
                 except IndexError:
-                    if k == 'shape':
-                        temp[k] = 'circle'
+                    if k == 'shape': 
+                        temp[k] = kwargs['shape']
             objs.append(temp)
         self.all_objs = json.dumps(objs)
         command = "JS9.AddRegions({objs}, {{display:'{wid}JS9'}})".format(objs=self.all_objs, wid=self.wid)
