@@ -68,6 +68,7 @@ class Js9Local(object):
         self.url = None
         self.wcs = None
         self.header = None
+        self.suffix = 'JS9' 
 
     def DelDiv(self):
         """
@@ -121,8 +122,8 @@ class Js9Local(object):
             kwargs['scaleclipping'] = 'zscale'
         if len(kwargs) > 0:
             opts = json.dumps(kwargs)+','
-        fmt = dict(url=self.url, kw=opts, wid=self.wid)
-        command = "JS9.Load('{url}',{kw}{{display:'{wid}JS9'}});".format(**fmt)
+        fmt = dict(url=self.url, kw=opts, wid=self.wid, suffix=self.suffix)
+        command = "JS9.Load('{url}',{kw}{{display:'{wid}{suffix}'}});".format(**fmt)
         try:
             hdulist = fits.open(url)
             temp_wcs = wcs.WCS(hdulist[0].header)
@@ -138,7 +139,7 @@ class Js9Local(object):
         """
         Close current image
         """
-        command = "JS9.CloseImage({{display:'{wid}JS9'}});".format(wid=self.wid)
+        command = "JS9.CloseImage({{display:'{wid}{suffix}'}});".format(wid=self.wid, suffix=self.suffix)
         get_ipython().run_cell_magic('javascript', '', command)
 
     def SetColorMap(self, colormap, contrast=None, bias=None):
@@ -157,8 +158,8 @@ class Js9Local(object):
             extra += '%f,' % contrast
         if bias is not None:
             extra  += '%f,' % bias
-        fmt = dict(wid=self.wid,cmap=colormap, extra=extra)
-        command = "JS9.SetColormap('{cmap}', {extra} {{display:'{wid}JS9'}});".format(**fmt)
+        fmt = dict(wid=self.wid,cmap=colormap, extra=extra, suffix=self.suffix)
+        command = "JS9.SetColormap('{cmap}', {extra} {{display:'{wid}{suffix}'}});".format(**fmt)
         get_ipython().run_cell_magic('javascript', '', command)
        
     def AddRegions(self, **kwargs):
@@ -184,7 +185,7 @@ class Js9Local(object):
                         temp[k] = 'circle'
             objs.append(temp)
         self.all_objs = json.dumps(objs)
-        command = "JS9.AddRegions({objs}, {{display:'{wid}JS9'}})".format(objs=self.all_objs, wid=self.wid)
+        command = "JS9.AddRegions({objs}, {{display:'{wid}{suffix}'}})".format(objs=self.all_objs, wid=self.wid, suffix=self.suffix)
         get_ipython().run_cell_magic('javascript', '', command)
 
     def RegionList(self):
