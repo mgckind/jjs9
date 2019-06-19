@@ -2,17 +2,77 @@
    "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" > 
-  <link type="image/x-icon" rel="shortcut icon" href="./favicon.ico">
-  <link type="text/css" rel="stylesheet" href={{static_url("js9support.css")}}>
-  <link type="text/css" rel="stylesheet" href={{static_url("js9.css")}}>
-  <script type="text/javascript" src={{static_url("js9support.min.js")}}></script>
-  <script type="text/javascript" src={{static_url("js9.min.js")}}></script>
-  <script type="text/javascript" src={{static_url("js9plugins.js")}}></script>
-  <style type="text/css">body {margin: 0px;}</style>
-  <script type='text/javascript'>
-function randomString(length) {
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" >
+  <link type="image/x-icon" rel="shortcut icon" href="favicon.ico">
+  <link type="text/css" rel="stylesheet" href="js9support.css">
+  <link type="text/css" rel="stylesheet" href="js9.css">
+  <script type="text/javascript" src="js9prefs.js"></script>
+  <script type="text/javascript" src="js9support.min.js"></script>
+  <script type="text/javascript" src="js9.min.js"></script>
+  <script type="text/javascript" src="js9plugins.js"></script>
+  <style type="text/css">
+      h2 {
+        margin-bottom: 0px;
+      }
+      #myAnalysisDiv {
+        background: #E9E9E9;
+        border-width: 0px;
+        overflow: auto;
+      }
+      #myAnalysisResults {
+        padding: 5px;
+        margin:  5px;
+        min-height: 440px;
+      }
+      #myButtonsDiv {
+        background: #E9E9E9;
+        border-width: 1px;
+        border-color: black;
+        padding-top: 5px;
+        font: normal 12px Arial;
+        height: 25px;
+      }
+      #intro, #docs, #demos, #status, #get, #thanks {
+        padding: 10px;
+      }
+      .myfooter {
+        font: normal 12px Arial;
+      }
+      .pluginContainer {
+        padding: 5px;
+        padding-left: 4px;
+        background: #E9E9E9;
+      }
+      .plugin {
+        display: inline-block;
+        width: 210px;
+        height: 210px;
+      }
+      /* http://stephen.io/mediaqueries/ */
+      /* For general ipad layouts */
+      @media only screen
+      and (min-device-width : 768px)
+      and (max-device-width : 1024px) {
+      }
+      /* For general iphone layouts */
+      @media only screen
+      and (min-device-width : 375px)
+      and (max-device-width : 667px) {
+        #myTabsDiv {
+            font: normal 8px Arial;
+        }
+        .myfooter {
+            font: normal 8px Arial;
+        }
+      }
+
+  </style>
+</head>
+<body>
+    <script type="text/javascript">
+    function randomString(length) {
     var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
 
     if (! length) {
@@ -24,21 +84,162 @@ function randomString(length) {
         str += chars[Math.floor(Math.random() * chars.length)];
     }
     return str;
-}
-</script>
-  
-  <title>JS9</title>
-</head>
-<body>
-  <div class="JS9Menubar" id="JS9Menubar"></div>
-  <div class="JS9" id="JS9"></div>
-  <div class="JS9Colorbar" id="JS9Colorbar"></div>
+    }
+
+    var aname, im, lastim, lastreg, js9tabs;
+    var ncall = 0;
+    var err = {};
+    var plot, pobj;
+    var running = false;
+    var objs = [
+      {scale: "log", colormap: "viridis", contrast: 3.26, bias: 0.66},
+      {scale: "log", colormap: "magma", contrast: 2.9, bias: 0.72},
+      {scale: "log", colormap: "heat", contrast: 2.1, bias: 0.8},
+      {scale: "log", colormap: "cool", contrast: 3.28, bias: 0.63},
+      {scale: "log", colormap: "inferno", contrast: 2.9, bias: 0.72},
+      {scale: "log", colormap: "b", contrast: 1.97, bias: 0.69},
+      {scale: "log", colormap: "grey", contrast: 3.2, bias: 0.69}
+    ];
+    // this is the callback for all region changes
+    JS9.Regions.opts.onchange = runMyAnalysis;
+    // called when the function changes to redo the last display
+    function redo(){
+      if( lastim && lastreg ){
+        runMyAnalysis(lastim, lastreg);
+      }
+    }
+    // add event handlers to the analysis buttons to execute the specified task
+    // note that jQuery is available automatically
+    function initMyAnalysis(){
+        var idx, obj;
+        $("#counts").on("click", function(evt){aname = "counts"; redo()});
+        $("#radial").on("click", function(evt){aname = "radial"; redo()});
+        $("#spectrum").on("click", function(evt){aname = "spectrum"; redo()});
+        $("#lcurve").on("click", function(evt){aname = "lcurve"; redo()});
+        js9tabs = new ddtabcontent("js9tabs"); //enter ID of Tab Container
+        js9tabs.setpersist(false); //toggle persistence of the tabs' state
+        js9tabs.setselectedClassTarget("link"); //"link" or "linkparent"
+        js9tabs.init();
+        idx = Math.floor(Math.random() * objs.length);
+        obj = $.extend(true, {}, objs[idx]);
+    }
+    // run analysis on current image, defining a function to display results
+    function runMyAnalysis(im, xreg){
+        var rarr = [];
+        lastim = im;
+        lastreg = xreg;
+        // are we already running?
+        if( running ){
+            return;
+        }
+        // don't run after removing the region
+        if( xreg.mode === "remove" ){
+            return;
+        }
+        // only run on changes to source or background regions
+        if( (xreg.tags.indexOf("source") === -1)     &&
+            (xreg.tags.indexOf("background") === -1) ){
+            return;
+        }
+        // check whether we are in the analysis tab
+        if( js9tabs.subcontentids[js9tabs.currentTabIndex] !== "analysis" ){
+          return;
+        }
+        // make sure there are analysis tasks for this image
+        if( !lastim.analysisPackages && !err[lastim.id] ){
+          err[lastim.id] = true;
+          JS9.error("sorry, no server-side tasks are available for: " +
+                    lastim.id);
+        }
+        // process analysis request
+        if( aname ){
+          switch(aname){
+          case "counts":
+            running = true;
+            JS9.RunAnalysis("counts", null, dispMyAnalysis);
+            break;
+          case "radial":
+            running = true;
+            JS9.RunAnalysis("radialprofile", null, dispMyAnalysis);
+            break;
+          case "spectrum":
+            running = true;
+            JS9.RunAnalysis("energyplot", null, dispMyAnalysis);
+            break;
+          case "lcurve":
+            running = true;
+            JS9.RunAnalysis("timeplot", null, dispMyAnalysis);
+            break;
+          default:
+            alert("unknown analysis task: "+aname);
+            break;
+          }
+        }
+    }
+    // display function passed to JS9.RunAnalysis when the task is complete.
+    function dispMyAnalysis(stdout, stderr, errcode, a){
+      var rdiv = $("#myAnalysisResults");
+      if( !rdiv ){
+        alert("the analysis results area is missing on this web page");
+      }
+      else if( stderr ){
+        alert(stderr);
+      } else {
+       // remove previous contents
+       rdiv.empty();
+       // process return type
+       switch(a.rtype){
+          case "text":
+          // text can just get shoved into the div
+          rdiv.html("<pre>" + stdout + "<\/pre>");
+          break;
+        case "plot":
+          // plot can make use of the already-loaded flot routines
+          // (JS9.plotOpts is defined in js9.js)
+          try{
+	    // retrieve plot object (should contain a data object)
+	    pobj = JSON.parse(stdout);
+            if( pobj && pobj.data ){
+              // destroy previous plot, or else some bindings will remain
+              if( plot && !running ){
+                plot.destroy();
+                plot = null;
+              }
+              // erase explanatory text
+              rdiv.innerHTML = "";
+    	      // plot the data
+	      plot = $.plot(rdiv, [pobj], JS9.plotOpts);
+	    } else {
+              alert("no analysis data returned");
+            }
+          }
+	  catch(e){
+	    alert("can't plot data: "+e+" "+stdout)
+          };
+          break;
+        }
+      }
+      running = false;
+    }
+    // wait until document is really ready to do the init
+    // (using onload can cause a race condition with tabcontent init)
+    $(document).ready(function(){
+        initMyAnalysis();
+    });
+    </script>
+
+    <div class="JS9Menubar" id="JS9Menubar"></div>
+    <div class="JS9" id="JS9"></div>
+    <div style="margin-top: 2px;">
+    <div class="JS9Colorbar" id="JS9Colorbar"></div>
+    </div>
+
 <script type="text/javascript">
 {% if jid %}
 var uniqueJS9 = "{{jid}}"+"JS9"
 {% else %}
 var uniqueJS9 = randomString(8)+"JS9"
-{% end %}
+{% endif %}
 var uniqueJS9Menubar = uniqueJS9 + "Menubar"
 var uniqueJS9Colorbar = uniqueJS9 + "Colorbar"
 document.getElementById('JS9').setAttribute("id",uniqueJS9);
@@ -47,12 +248,7 @@ document.getElementById('JS9Colorbar').setAttribute("id",uniqueJS9Colorbar);
 console.log(document.getElementsByClassName('JS9')[0].id)
 </script>
 
-<!--
-<p id="demo"></p>
-<script>
-document.getElementById("demo").innerHTML = "JS9 id: "+uniqueJS9;
-top.postMessage(uniqueJS9, "http://localhost:8888"); 
-</script>
--->
+
+
 </body>
 </html>
