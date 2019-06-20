@@ -28,8 +28,12 @@ jupyter labextension install @jupyter-widgets/jupyterlab-sidecar
 ```
 
 And finally to install jjs9:
-
-    pip install git+https://github.com/mgckind/jjs9.git
+  
+```
+git clone https://github.com/mgckind/jjs9.git
+cd jjs9
+pip install -e .
+```
 
 Now to enable the jjs9 server to run alongside the Jupyter Lab,
 
