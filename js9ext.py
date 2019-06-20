@@ -26,8 +26,11 @@ def load_jupyter_server_extension(nb_server_app):
         nb_server_app (NotebookWebApplication): handle to the Notebook webserver instance.
     """
     logger = logging.getLogger('tornado.access')
-    logger.info('Launching js9Helper')
-    subprocess.Popen(['node', 'js9server/js9Helper.js'])
+    logger.info('Jjs9 - Launching js9Helper')
+    localf = os.path.dirname(__file__)
+    jhelper = os.path.join(localf, 'js9Helper.js')
+    logger.info('Jjs9 - {}'.format(jhelper))
+    subprocess.Popen(['node', '{}'.format(jhelper)])
     web_app = nb_server_app.web_app
     web_app.settings["jinja2_env"].loader.searchpath += [os.path.dirname(__file__)]
     host_pattern = '.*$'
