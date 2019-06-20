@@ -45,11 +45,12 @@ setup(
     author='Matias Carrasco Kind ',
     author_email='mgckind@gmail.com',
     license='LICENSE.txt',
+    include_package_data = True,
     scripts=[],
     cmdclass={
         'develop': PostDevelop,
         'install': PostInstall,
     },
-    py_modules=['js9ext'],
+    py_modules=['js9ext', 'jjs9'],
     packages=[],
 )

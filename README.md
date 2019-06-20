@@ -11,7 +11,8 @@ Create as many instances needed and display a JS9 windows and functionalities. T
 There is a lot of requirements, including node.js and enabling ipywidgets. Here you can use conda to get started:
 
 ```
-conda create -n jjs9 python=3
+conda create -n jjs9 -y python=3
+## need to activate
 conda install -y -c conda-forge nodejs ipywidgets
 conda install -y jupyterlab tornado astropy
 pip install sidecar
