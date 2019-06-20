@@ -52,5 +52,4 @@ setup(
         'install': PostInstall,
     },
     py_modules=['js9ext', 'jjs9'],
-    packages=['js9server'],
 )
