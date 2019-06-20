@@ -10,8 +10,7 @@ def read(filename):
     return open(os.path.join(prjdir, filename)).read()
 
 
-class PostDevelopCommand(develop):
-    """Post-installation for development mode."""
+class PostDevelop(develop):
     def run(self):
         if os.path.exists('js9server/js9ext.py'):
             check_call("rm -rf js9server/".split())
@@ -23,8 +22,7 @@ class PostDevelopCommand(develop):
             check_call("touch js9server/__init__.py".split())
             develop.run(self)
 
-class PostInstallCommand(install):
-    """Post-installation for development mode."""
+class PostInstall(install):
     def run(self):
         if os.path.exists('js9server/js9ext.py'):
             check_call("rm -rf js9server/".split())
@@ -49,8 +47,8 @@ setup(
     license='LICENSE.txt',
     scripts=[],
     cmdclass={
-        'develop': PostDevelopCommand,
-        'install': PostInstallCommand,
+        'develop': PostDevelop,
+        'install': PostInstall,
     },
     py_modules=['js9ext'],
     packages=[],
