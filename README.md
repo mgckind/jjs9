@@ -1,6 +1,6 @@
 ## JJS9
 
-This is a small and in development wrapper for a front-end [JS9](https://github.com/ericmandel/js9) application which is a astronomical image display tool written in Javascript based in DS9. It is a **server extension** for Jupyter Labs.
+This is a small and *in development* wrapper for a front-end [JS9](https://github.com/ericmandel/js9) application which is a astronomical image display tool written in Javascript based on DS9. It is a **server extension** for Jupyter Lab which runs the node server and add extra handlers to the running Lab.
 
 It can be used to create *any number* of JS9 Displays windows running from the server via socket.io communication. The node server and the small python server are loaded when the notebook start.
 
@@ -28,7 +28,7 @@ jupyter labextension install @jupyter-widgets/jupyterlab-sidecar
 ```
 
 And finally to install jjs9:
-  
+
 ```
 git clone https://github.com/mgckind/jjs9.git
 cd jjs9
@@ -40,8 +40,5 @@ Now to enable the jjs9 server to run alongside the Jupyter Lab,
     jupyter-lab --NotebookApp.nbserver_extensions="{'js9server.js9ext':True}"
 
 ### Example
-
-    import jjs9
-    jtest =  jjs9.JS9Server(wid='test0')
-    jtest.new_display(attached=False)
-    jtest.connect()
+See [demo.ipynb](demo.ipynb) for a quick and brief demo
+![Demo](data_examples/demo.png)
