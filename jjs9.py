@@ -19,6 +19,9 @@ import uuid
 from collections import OrderedDict
 from collections import defaultdict
 import weakref
+from pandas.io.json import json_normalize
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class KeepRefs(object):
@@ -123,3 +126,34 @@ class JS9Server(pyjs9.JS9, KeepRefs):
                     r.connected = False
         return
                 
+     def RadialProfile(self, position, nrings, minr, maxr):
+        #create region based off input
+        cdelt = 0.263
+        minr = minr / cdelt
+        maxr = maxr / cdelt
+        radii = np.linspace(minr, maxr, nrings)
+        radii_list = radii.tolist()
+        regions = [{'shape': 'annulus','radii': radii_list, 'ra' : position[0], 'dec' : position[1]}]
+        
+        #add regions
+        self.AddRegions(regions)
+        
+        #run radial profile function on regions shown, return in json
+        output = self.CountsInRegions("$sregions",'','{"cmdswitches":"-j -r"}')
+        output = output.replace('-nan', '0.0')
+        output2 = json.loads(output)
+        
+        #change json output to pandas
+        BSRdf = json_normalize(output2['backgroundSubtractedResults'])
+        
+        #plot radial profile
+        rad = BSRdf['radius2'].values
+        intensity = BSRdf['surfBrightness'].values
+        plt.plot(rad, intensity, label = 'region 1')
+        plt.title("Radial Profile")
+        plt.xlabel('distance from center (")')
+        plt.ylabel('intensity (counts/arcsec**2)')
+        plt.legend()
+        
+        #return df for further use
+        return BSRdf  
