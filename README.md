@@ -14,7 +14,7 @@ There is a lot of requirements, including node.js and enabling ipywidgets. Here 
 conda create -n jjs9 -y python=3
 ## need to activate
 conda install -y -c conda-forge nodejs ipywidgets
-conda install -y jupyterlab tornado astropy
+conda install -y jupyterlab tornado astropy pandas
 pip install sidecar
 pip install git+https://github.com/ericmandel/pyjs9.git
 pip install "python-socketio[client]"
